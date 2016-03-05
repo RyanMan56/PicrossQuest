@@ -44,8 +44,8 @@ public class GameScreen implements Screen {
 	private String topNumbers[];
 	private String sideNumbers[];
 	private StringBuilder sb;
-	private Label topLabels[];
-	private Label sideLabels[];
+	private Label topLabels[][];
+	private Label sideLabels[][];
 	private ArrayList topValues[];
 	private ArrayList sideValues[];
 	private LabelStyle labelStyle;
@@ -193,8 +193,15 @@ public class GameScreen implements Screen {
 		labelStyle = new LabelStyle();
 		labelStyle.font = bitmapFont;
 		labelStyle.fontColor = Color.BLACK;
-		topLabels = new Label[topNumbers.length];
-		sideLabels = new Label[sideNumbers.length];
+		topLabels = new Label[topNumbers.length][];
+		for (int i = 0; i < topValues.length; i++) {
+			topLabels[i] = new Label[topValues[i].size()];
+		}
+
+		sideLabels = new Label[sideNumbers.length][];
+		for (int i = 0; i < sideValues.length; i++) {
+			sideLabels[i] = new Label[sideValues[i].size()];
+		}
 
 		for (int i = 0; i < topLabels.length; i++) {
 			int offset = 5;
@@ -204,20 +211,29 @@ public class GameScreen implements Screen {
 						offset = 2;
 			if (topNumbers[i].equals(""))
 				topNumbers[i] = "0\n";
-			topLabels[i] = new Label(topNumbers[i], labelStyle);
-			//			topLabels[i].setFontScale(squareWidth/25);
-			topLabels[i].setAlignment(Align.bottomLeft);
-			//			topLabels[i].setPosition(gridBounds.x + squareWidth * i + offset + squareWidth / 2 - topLabels[i].getWidth() / 2, gridBounds.height - 20 * topLabels[i].getFontScaleY());
-			topLabels[i].setPosition(gridBounds.x + squareWidth * i + offset + squareWidth / 2 - topLabels[i].getWidth() / 2, gridBounds.height - topLabels[i].getHeight());
+
+			int offsetH = 0;
+			for (int j = 0; j < topLabels[i].length; j++) {
+				topLabels[i][j] = new Label(topValues[i].get(j).toString(), labelStyle);
+				//			topLabels[i].setFontScale(squareWidth/25);
+				//				topLabels[i][j].setAlignment(Align.bottomLeft);
+				//			topLabels[i].setPosition(gridBounds.x + squareWidth * i + offset + squareWidth / 2 - topLabels[i].getWidth() / 2, gridBounds.height - 20 * topLabels[i].getFontScaleY());
+				topLabels[i][j].setPosition(gridBounds.x + squareWidth * i + offset + squareWidth / 2 - topLabels[i][j].getWidth() / 2, gridBounds.height - topLabels[i][j].getHeight() + offsetH);
+				offsetH -= topLabels[i][j].getHeight();
+			}
 		}
 
 		for (int i = 0; i < sideLabels.length; i++) {
 			if (sideNumbers[i].equals(""))
 				sideNumbers[i] = "0  ";
-			sideLabels[i] = new Label(sideNumbers[i], labelStyle);
-			//			sideLabels[i].setFontScale(squareHeight/25);
-			sideLabels[i].setAlignment(Align.right);
-			sideLabels[i].setPosition(gridBounds.x - (sideLabels[i].getWidth()), gridBounds.y + gridBounds.height - squareHeight * (i + 1) + squareHeight / 2 - sideLabels[i].getHeight() / 2);
+			int offsetW = 0;
+			for (int j = 0; j < sideLabels[i].length; j++) {
+				sideLabels[i][j] = new Label(sideValues[i].get(j).toString(), labelStyle);
+				//			sideLabels[i].setFontScale(squareHeight/25);
+				//				sideLabels[i].setAlignment(Align.right);
+				sideLabels[i][j].setPosition(gridBounds.x - (sideLabels[i][j].getWidth()) + offsetW, gridBounds.y + gridBounds.height - squareHeight * (i + 1) + squareHeight / 2 - sideLabels[i][j].getHeight() / 2);
+				offsetW += sideLabels[i][j].getHeight();
+			}
 		}
 
 		for (int i = 0; i < topNumbers.length; i++) {
@@ -232,7 +248,7 @@ public class GameScreen implements Screen {
 				biggestSideSpace = i;
 			}
 		}
-		initialFontHeight = topLabels[biggestSpace].getHeight();
+		initialFontHeight = topLabels[biggestSpace][0].getHeight() * topValues[biggestSpace].size();
 		setupScale();
 
 		finishedGrid = new int[squaresOnHeight][squaresOnWidth];
@@ -258,27 +274,44 @@ public class GameScreen implements Screen {
 		crossButtonBounds = new Rectangle(0, penButtonBounds.y - penButtonBounds.height, penButton.getWidth(), penButton.getHeight());
 	}
 
-	private void setupScale() {
-		if (topLabels[biggestSpace].getY() + topLabels[biggestSpace].getHeight() * scale + initialFontHeight > imageProvider.getScreenHeight()) {
-			for (int i = 0; i < topLabels.length; i++) {
-				topLabels[i].setFontScale(scale);
-				topLabels[i].setAlignment(Align.bottomLeft);
-				int offset = 5;
-				if (topNumbers[i].length() >= 3)
-					if (!topNumbers[i].substring(topNumbers[i].length() - 3, topNumbers[i].length() - 1).contains("\n"))
-						if (Integer.parseInt(topNumbers[i].substring(topNumbers[i].length() - 3, topNumbers[i].length() - 1)) >= 10)
-							offset = 2;
-				topLabels[i].setPosition(gridBounds.x + squareWidth * i + offset * scale + squareWidth / 2 - topLabels[i].getWidth() / 2, gridBounds.height - 20 * topLabels[i].getFontScaleY());
-			}
-			for (int i = 0; i < sideLabels.length; i++) {
-				sideLabels[i].setFontScale(scale);
-				sideLabels[i].setPosition(gridBounds.x - (sideLabels[i].getWidth()), gridBounds.height - squareHeight * (i + 1) + squareHeight / 2 - sideLabels[i].getHeight() / 2);
-			}
-		} else {
-			scale += 0.1f;
-			setupScale();
-		}
+	private void fixHeight(){
+//		if(topLabels[biggestSpace][0].getY() < gridBounds.y+gridBounds.height){
+//			for(int i = 0; i < topLabels.length; i++){
+//				for(int j = 0; j < topLabels[i].length; j++){
+//					topLabels[i][j].setY(topLabels[i][j].getY() + 10);
+//					fixHeight();
+//				}
+//			}
+//			System.out.println(topLabels[biggestSpace][0].getY());
+//		}
+		System.out.println(topLabels[0][0].getText());
 	}
+
+	private void setupScale() {
+		fixHeight();
+	}
+
+	//	private void setupScale() {
+	//		if (topLabels[biggestSpace].getY() + topLabels[biggestSpace].getHeight() * scale + initialFontHeight > imageProvider.getScreenHeight()) {
+	//			for (int i = 0; i < topLabels.length; i++) {
+	//				topLabels[i].setFontScale(scale);
+	//				topLabels[i].setAlignment(Align.bottomLeft);
+	//				int offset = 5;
+	//				if (topNumbers[i].length() >= 3)
+	//					if (!topNumbers[i].substring(topNumbers[i].length() - 3, topNumbers[i].length() - 1).contains("\n"))
+	//						if (Integer.parseInt(topNumbers[i].substring(topNumbers[i].length() - 3, topNumbers[i].length() - 1)) >= 10)
+	//							offset = 2;
+	//				topLabels[i].setPosition(gridBounds.x + squareWidth * i + offset * scale + squareWidth / 2 - topLabels[i].getWidth() / 2, gridBounds.height - 20 * topLabels[i].getFontScaleY());
+	//			}
+	//			for (int i = 0; i < sideLabels.length; i++) {
+	//				sideLabels[i].setFontScale(scale);
+	//				sideLabels[i].setPosition(gridBounds.x - (sideLabels[i].getWidth()), gridBounds.height - squareHeight * (i + 1) + squareHeight / 2 - sideLabels[i].getHeight() / 2);
+	//			}
+	//		} else {
+	//			scale += 0.1f;
+	//			setupScale();
+	//		}
+	//	}
 
 	@Override
 	public void show() {
@@ -354,11 +387,11 @@ public class GameScreen implements Screen {
 
 		for (int x = 0; x < squaresOnWidth / 2; x++) {
 			batch.draw(assetManager.get("Glint.png", Texture.class), gridBounds.x + x * 2 * squareWidth, gridBounds.y, squareWidth, squaresOnHeight * squareHeight);
-			batch.draw(assetManager.get("EndGlint.png", Texture.class), gridBounds.x + x * 2 * squareWidth, gridBounds.height, squareWidth, topLabels[biggestSpace].getHeight() * topLabels[biggestSpace].getFontScaleY());
+			//			batch.draw(assetManager.get("EndGlint.png", Texture.class), gridBounds.x + x * 2 * squareWidth, gridBounds.height, squareWidth, topLabels[biggestSpace].getHeight() * topLabels[biggestSpace].getFontScaleY());
 		}
 		for (int y = 0; y < squaresOnHeight / 2; y++) {
 			batch.draw(assetManager.get("Glint.png", Texture.class), gridBounds.x, gridBounds.y + y * 2 * squareHeight + squareHeight, squaresOnWidth * squareWidth, squareHeight);
-			batch.draw(assetManager.get("EndGlintSide.png", Texture.class), gridBounds.x - sideLabels[biggestSideSpace].getWidth() * sideLabels[biggestSideSpace].getFontScaleX() * 1.5f, gridBounds.y + y * 2 * squareHeight + squareHeight, sideLabels[biggestSideSpace].getWidth() * sideLabels[biggestSideSpace].getFontScaleX() * 1.5f, squareHeight);
+			//			batch.draw(assetManager.get("EndGlintSide.png", Texture.class), gridBounds.x - sideLabels[biggestSideSpace].getWidth() * sideLabels[biggestSideSpace].getFontScaleX() * 1.5f, gridBounds.y + y * 2 * squareHeight + squareHeight, sideLabels[biggestSideSpace].getWidth() * sideLabels[biggestSideSpace].getFontScaleX() * 1.5f, squareHeight);
 		}
 
 		for (int y = 0; y < squaresOnHeight; y++)
@@ -370,14 +403,17 @@ public class GameScreen implements Screen {
 				}
 
 		for (int i = 0; i < topLabels.length; i++) {
-			if (i == 0)
-				topLabels[0].getStyle().fontColor = Color.GRAY;
-			else
-				topLabels[i].getStyle().fontColor = Color.BLACK;
-			topLabels[i].draw(batch, batch.getColor().a);
+			for (int j = 0; j < topLabels[i].length; j++) {
+				//			if (i == 0)
+				//				topLabels[0].getStyle().fontColor = Color.GRAY;
+				//			else
+				//				topLabels[i].getStyle().fontColor = Color.BLACK;
+				topLabels[i][j].draw(batch, batch.getColor().a);
+			}
 		}
 		for (int i = 0; i < sideLabels.length; i++)
-			sideLabels[i].draw(batch, batch.getColor().a);
+			for (int j = 0; j < sideLabels[i].length; j++)
+				sideLabels[i][j].draw(batch, batch.getColor().a);
 
 		batch.end();
 
