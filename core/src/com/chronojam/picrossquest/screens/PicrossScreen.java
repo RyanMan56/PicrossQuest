@@ -1,4 +1,4 @@
-package com.subzero.picrossquest.screens;
+package com.chronojam.picrossquest.screens;
 
 import java.util.ArrayList;
 
@@ -14,6 +14,8 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.math.Rectangle;
@@ -24,11 +26,10 @@ import com.badlogic.gdx.scenes.scene2d.utils.ScissorStack;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
-import com.subzero.picrossquest.PicrossQuest;
-import com.subzero.picrossquest.services.ImageProvider;
+import com.chronojam.picrossquest.PicrossQuest;
+import com.chronojam.picrossquest.services.ImageProvider;
 
-public class GameScreen implements Screen {
-	private ImageProvider imageProvider;
+public class PicrossScreen implements Screen {
 	private PicrossQuest game;
 	private AssetManager assetManager;
 	private Screen oldScreen;
@@ -41,26 +42,25 @@ public class GameScreen implements Screen {
 	private int squaresOnWidth, squaresOnHeight;
 	private Texture finalImage, finalImageColoured;
 	private Pixmap pixmap;
-	private String topNumbers[];
-	private String sideNumbers[];
-	private StringBuilder sb;
 	private Label topLabels[][];
 	private Label sideLabels[][];
-	private ArrayList topValues[];
-	private ArrayList sideValues[];
+	//	private BitmapFont topFonts[][];
+	//	private BitmapFont sideFonts[][];
+	private ArrayList<Integer> topValues[];
+	private ArrayList<Integer> sideValues[];
 	private LabelStyle labelStyle;
 	private BitmapFont bitmapFont;
 	private int finishedGrid[][], gameGrid[][];
 	private int brushState = -1;
 	private final int UNSET = -1, REMOVING = 0, DRAWING = 1;
-	private float scale = 0.1f;
+	private float scale = 1f;
 	private float initialFontWidth, initialFontHeight;
 	private int biggestNumber = 0, biggestSpace, biggestSideNumber = 0, biggestSideSpace;
 	private boolean finished = false;
 	private boolean stage1Finished = false, stage2Finished = false, stage3Finished = false;
 	private int pixelsToDraw = 0;
 	private long startTime;
-	private long destTime = 50;
+	private long destTime = 50, serpaDestTime = 75;
 	private float alpha = 0;
 	private float glintX, glintY;
 	private Rectangle penButtonBounds, crossButtonBounds;
@@ -68,112 +68,96 @@ public class GameScreen implements Screen {
 	private boolean penButtonPressed = true, crossButtonPressed;
 	private boolean checkTopNumbers, checkSideNumbers;
 	private boolean[][] greyedNumbersTop, greyedNumbersSide;
+	private String characterName;// = "Main";
+	private boolean debugMode = true;
+	private int fontSize = 8;
+	private boolean serpaRowFinished = false;
+	private boolean animationStarted = false;
+	private Color color1 = new Color(0.86f, 0.27f, 0.25f, 1), color2 = new Color(0.76f, 0.79f, 0.45f, 1), color3 = new Color(0.45f, 0.64f, 0.79f, 1);
+	private Color backColor = color3, newColor = color1;
 
-	public GameScreen(PicrossQuest game, AssetManager assetManager, Screen oldScreen) {
+	// TODO
+
+	public PicrossScreen(PicrossQuest game, AssetManager assetManager, Screen oldScreen, String characterName) {
 		this.game = game;
 		this.assetManager = assetManager;
 		this.oldScreen = oldScreen;
-		imageProvider = new ImageProvider();
+		this.characterName = characterName;
 		camera = new OrthographicCamera();
-		camera.setToOrtho(false, imageProvider.getScreenWidth(), imageProvider.getScreenHeight());
-		viewport = new FitViewport(imageProvider.getScreenWidth(), imageProvider.getScreenHeight(), camera);
+		camera.setToOrtho(false, ImageProvider.SCREEN_WIDTH, ImageProvider.SCREEN_HEIGHT);
+		viewport = new FitViewport(ImageProvider.SCREEN_WIDTH, ImageProvider.SCREEN_HEIGHT, camera);
 		batch = new SpriteBatch();
 		shapeRenderer = new ShapeRenderer();
 
-		finalImage = assetManager.get("NikolaTemplate.png", Texture.class);
+		finalImage = assetManager.get(characterName + "Template.png", Texture.class);
 		finalImage.getTextureData().prepare();
 		pixmap = finalImage.getTextureData().consumePixmap();
 
-		finalImageColoured = assetManager.get("Nikola.png", Texture.class);
+		finalImageColoured = assetManager.get(characterName + ".png", Texture.class);
 
 		squaresOnWidth = finalImage.getWidth();
 		squaresOnHeight = finalImage.getHeight();
-		gridBounds = new Rectangle(400, 20, imageProvider.getScreenWidth() - 20, imageProvider.getScreenHeight() - 100);
+		gridBounds = new Rectangle(400, 20, ImageProvider.SCREEN_WIDTH - 20, ImageProvider.SCREEN_HEIGHT - 100);
 		//		squareWidth = (gridBounds.width - gridBounds.x) / squaresOnWidth;
 		squareHeight = (gridBounds.height - gridBounds.y) / squaresOnHeight;
 		squareWidth = squareHeight; // This instead to keep square aspect ratio
 
-		topNumbers = new String[finalImage.getWidth()];
-		sideNumbers = new String[finalImage.getHeight()];
-
-		sb = new StringBuilder();
+		//		topNumbers = new String[finalImage.getWidth()];
+		//		sideNumbers = new String[finalImage.getHeight()];
+		topValues = new ArrayList[squaresOnWidth];
+		sideValues = new ArrayList[squaresOnHeight];
 
 		int count = 0;
 
-		for (int i = 0; i < topNumbers.length; i++) {
-			for (int y = 0; y < squaresOnHeight; y++) {
-				int color = pixmap.getPixel(i, y);
-				if ((color & 0xff000000) == 0x0) {
-					count++;
-				} else {
-					if (count != 0) {
-						sb.append(count + "\n");
-						count = 0;
-					}
-				}
-			}
-			if (count != 0) {
-				sb.append(count + "\n");
-				count = 0;
-			}
-			topNumbers[i] = sb.toString();
-			sb = new StringBuilder();
-		}
-
-		for (int i = 0; i < sideNumbers.length; i++) {
-			for (int x = 0; x < squaresOnWidth; x++) {
-				int color = pixmap.getPixel(x, i);
-				if ((color & 0xff000000) == 0x0) {
-					count++;
-				} else {
-					if (count != 0) {
-						sb.append(count + "  ");
-						count = 0;
-					}
-				}
-			}
-			if (count != 0) {
-				sb.append(count + "  ");
-				count = 0;
-			}
-			sideNumbers[i] = sb.toString();
-			sb = new StringBuilder();
-		}
-
-		topValues = new ArrayList[squaresOnWidth];
-		for (int x = 0; x < squaresOnWidth; x++) {
-			int length = 0;
-			int start = 0;
+		for (int x = 0; x < topValues.length; x++) {
 			topValues[x] = new ArrayList<Integer>();
-			for (int i = 0; i < topNumbers[x].length(); i++) {
-				Character charAtI = topNumbers[x].charAt(i);
-				if (!charAtI.equals('\n')) {
-					length++;
-				} else {
-					topValues[x].add(Integer.parseInt(topNumbers[x].substring(start, start + length)));
-					length = 0;
-					if (i != topNumbers[x].length())
-						start = i + 1;
+			for (int y = 0; y < squaresOnHeight; y++) {
+				int color = pixmap.getPixel(x, y);
+				if ((color & 0xff000000) == 0x0)
+					count++;
+				else {
+					if (count != 0) {
+						topValues[x].add(count);
+						count = 0;
+					}
 				}
+				if (count != 0) {
+					if (y == squaresOnHeight - 1) {
+						topValues[x].add(count);
+						count = 0;
+					}
+				}
+				if (topValues[x].size() == 0)
+					if (y == squaresOnHeight - 1) {
+						topValues[x].add(count);
+						count = 0;
+					}
 			}
 		}
 
-		sideValues = new ArrayList[squaresOnHeight];
-		for (int y = 0; y < squaresOnHeight; y++) {
-			int length = 0;
-			int start = 0;
+		for (int y = 0; y < sideValues.length; y++) {
 			sideValues[y] = new ArrayList<Integer>();
-			for (int i = 0; i < sideNumbers[y].length(); i++) {
-				Character charAtI = sideNumbers[y].charAt(i);
-				if (!charAtI.equals(' ')) {
-					length++;
-				} else {
-					if (length > 0)
-						sideValues[y].add(Integer.parseInt(sideNumbers[y].substring(start, start + length)));
-					length = 0;
-					if (i != sideNumbers[y].length())
-						start = i + 1;
+			for (int x = 0; x < squaresOnWidth; x++) {
+				int color = pixmap.getPixel(x, y);
+				if ((color & 0xff000000) == 0x0)
+					count++;
+				else {
+					if (count != 0) {
+						sideValues[y].add(count);
+						count = 0;
+					}
 				}
+				if (count != 0) {
+					if (x == squaresOnWidth - 1) {
+						sideValues[y].add(count);
+						count = 0;
+					}
+				}
+				if (sideValues[y].size() == 0)
+					if (x == squaresOnWidth - 1) {
+						sideValues[y].add(count);
+						count = 0;
+					}
 			}
 		}
 
@@ -187,69 +171,82 @@ public class GameScreen implements Screen {
 			greyedNumbersSide[y] = new boolean[sideValues[y].size()];
 		}
 
-		//		bitmapFont = new BitmapFont(Gdx.files.internal("font.fnt"));
-		bitmapFont = new BitmapFont();
-		bitmapFont.getRegion().getTexture().setFilter(TextureFilter.Linear, TextureFilter.Linear);
+		FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("5x5_pixel.ttf"));
+		FreeTypeFontParameter parameter = new FreeTypeFontParameter();
+		parameter.size = fontSize;
+		parameter.mono = true;
+
 		labelStyle = new LabelStyle();
-		labelStyle.font = bitmapFont;
+		labelStyle.font = generator.generateFont(parameter);
 		labelStyle.fontColor = Color.BLACK;
-		topLabels = new Label[topNumbers.length][];
+		topLabels = new Label[topValues.length][];
 		for (int i = 0; i < topValues.length; i++) {
 			topLabels[i] = new Label[topValues[i].size()];
 		}
 
-		sideLabels = new Label[sideNumbers.length][];
+		sideLabels = new Label[sideValues.length][];
 		for (int i = 0; i < sideValues.length; i++) {
 			sideLabels[i] = new Label[sideValues[i].size()];
 		}
 
 		for (int i = 0; i < topLabels.length; i++) {
-			int offset = 5;
-			if (topNumbers[i].length() >= 3)
-				if (!topNumbers[i].substring(topNumbers[i].length() - 3, topNumbers[i].length() - 1).contains("\n"))
-					if (Integer.parseInt(topNumbers[i].substring(topNumbers[i].length() - 3, topNumbers[i].length() - 1)) >= 10)
-						offset = 2;
-			if (topNumbers[i].equals(""))
-				topNumbers[i] = "0\n";
-
-			int offsetH = 0;
-			for (int j = 0; j < topLabels[i].length; j++) {
+			//			int offset = 5;
+			//			int offsetH = 0;
+			count = 0;
+			for (int j = topLabels[i].length - 1; j >= 0; j--) {
 				topLabels[i][j] = new Label(topValues[i].get(j).toString(), labelStyle);
-				//			topLabels[i].setFontScale(squareWidth/25);
-				//				topLabels[i][j].setAlignment(Align.bottomLeft);
-				//			topLabels[i].setPosition(gridBounds.x + squareWidth * i + offset + squareWidth / 2 - topLabels[i].getWidth() / 2, gridBounds.height - 20 * topLabels[i].getFontScaleY());
-				topLabels[i][j].setPosition(gridBounds.x + squareWidth * i + offset + squareWidth / 2 - topLabels[i][j].getWidth() / 2, gridBounds.height - topLabels[i][j].getHeight() + offsetH);
-				offsetH -= topLabels[i][j].getHeight();
+				//				topLabels[i][j].setFontScale(squareWidth / 25);
+
+				if (j == topLabels[i].length - 1) {
+					if (topValues[i].get(j) >= 10)
+						topLabels[i][j].setPosition(gridBounds.x + squareWidth * i, gridBounds.height + 5);
+					else
+						topLabels[i][j].setPosition(gridBounds.x + squareWidth * i + squareWidth / 4, gridBounds.height + 5);
+				} else {
+					if (topValues[i].get(j) >= 10)
+						topLabels[i][j].setPosition(gridBounds.x + squareWidth * i, topLabels[i][j + 1].getY() + topLabels[i][j].getHeight() * 1.5f);
+					else
+						topLabels[i][j].setPosition(gridBounds.x + squareWidth * i + squareWidth / 4, topLabels[i][j + 1].getY() + topLabels[i][j].getHeight() * 1.5f);
+				}
+
+				//				offsetH -= topLabels[i][j].getHeight() * topLabels[i][j].getFontScaleY();
 			}
 		}
 
 		for (int i = 0; i < sideLabels.length; i++) {
-			if (sideNumbers[i].equals(""))
-				sideNumbers[i] = "0  ";
-			int offsetW = 0;
-			for (int j = 0; j < sideLabels[i].length; j++) {
+			count = 1;
+			for (int j = sideLabels[i].length - 1; j >= 0; j--) {
 				sideLabels[i][j] = new Label(sideValues[i].get(j).toString(), labelStyle);
-				//			sideLabels[i].setFontScale(squareHeight/25);
-				//				sideLabels[i].setAlignment(Align.right);
-				sideLabels[i][j].setPosition(gridBounds.x - (sideLabels[i][j].getWidth()) + offsetW, gridBounds.y + gridBounds.height - squareHeight * (i + 1) + squareHeight / 2 - sideLabels[i][j].getHeight() / 2);
-				offsetW += sideLabels[i][j].getHeight();
+				//				sideLabels[i][j].setFontScale(squareHeight / 25);
+				//								sideLabels[i][j].setAlignment(Align.right);
+				//				if (j == sideLabels[i].length - 1)
+				//					sideLabels[i][j].setPosition(gridBounds.x - sideLabels[i][j].getWidth() - 5, gridBounds.height - squareHeight * i - squareHeight);
+				//				else
+				if (sideValues[i].get(j) >= 10)
+					sideLabels[i][j].setPosition(gridBounds.x - 20 * count++ - 7, gridBounds.height - squareHeight * i - squareHeight / 1.5f);
+				else
+					sideLabels[i][j].setPosition(gridBounds.x - 20 * count++, gridBounds.height - squareHeight * i - squareHeight / 1.5f);
+
+				//				sideLabels[i][j].setPosition(gridBounds.x - (sideLabels[i][j].getWidth()) + offsetW, gridBounds.y + gridBounds.height - squareHeight * (i + 1) + squareHeight / 2 - sideLabels[i][j].getHeight() / 2);
+				//				offsetW += sideLabels[i][j].getHeight();
 			}
 		}
 
-		for (int i = 0; i < topNumbers.length; i++) {
-			if (topNumbers[i].length() > biggestNumber) {
-				biggestNumber = topNumbers[i].length();
+		for (int i = 0; i < topValues.length; i++) {
+			if (topValues[i].size() > biggestNumber) {
+				biggestNumber = topValues[i].size();
 				biggestSpace = i;
 			}
 		}
-		for (int i = 0; i < sideNumbers.length; i++) {
-			if (sideNumbers[i].length() > biggestSideNumber) {
-				biggestSideNumber = sideNumbers[i].length();
+		for (int i = 0; i < sideValues.length; i++) {
+			if (sideValues[i].size() > biggestSideNumber) {
+				biggestSideNumber = sideValues[i].size();
 				biggestSideSpace = i;
 			}
 		}
-		initialFontHeight = topLabels[biggestSpace][0].getHeight() * topValues[biggestSpace].size();
-		setupScale();
+		//		initialFontHeight = topLabels[biggestSpace][0].getHeight() * topValues[biggestSpace].size();
+		initialFontHeight = topLabels[biggestSpace][0].getHeight() * topLabels[biggestSpace][0].getFontScaleY();
+		//		setupScale();
 
 		finishedGrid = new int[squaresOnHeight][squaresOnWidth];
 		gameGrid = new int[squaresOnHeight][squaresOnWidth];
@@ -258,7 +255,8 @@ public class GameScreen implements Screen {
 				int color = pixmap.getPixel(x, finalImage.getHeight() - 1 - y);
 				if ((color & 0xff000000) == 0x0) {
 					finishedGrid[y][x] = 1;
-					//					gameGrid[y][x] = 1;
+					if (debugMode)
+						gameGrid[y][x] = 1;
 				} else {
 					finishedGrid[y][x] = 0;
 					//					gameGrid[y][x] = 0;
@@ -270,48 +268,44 @@ public class GameScreen implements Screen {
 		pixmap = finalImageColoured.getTextureData().consumePixmap();
 
 		penButton = assetManager.get("PenButton.png", Texture.class);
-		penButtonBounds = new Rectangle(0, imageProvider.getScreenHeight() - penButton.getHeight(), penButton.getWidth(), penButton.getHeight());
+		penButtonBounds = new Rectangle(0, ImageProvider.SCREEN_HEIGHT - penButton.getHeight(), penButton.getWidth(), penButton.getHeight());
 		crossButtonBounds = new Rectangle(0, penButtonBounds.y - penButtonBounds.height, penButton.getWidth(), penButton.getHeight());
-	}
 
-	private void fixHeight(){
-//		if(topLabels[biggestSpace][0].getY() < gridBounds.y+gridBounds.height){
-//			for(int i = 0; i < topLabels.length; i++){
-//				for(int j = 0; j < topLabels[i].length; j++){
-//					topLabels[i][j].setY(topLabels[i][j].getY() + 10);
-//					fixHeight();
-//				}
-//			}
-//			System.out.println(topLabels[biggestSpace][0].getY());
-//		}
-		System.out.println(topLabels[0][0].getText());
+		setupScale(); // TODO
 	}
 
 	private void setupScale() {
-		fixHeight();
+		if ((topLabels[biggestSpace][0].getY() + topLabels[biggestSpace][0].getHeight() > ImageProvider.SCREEN_HEIGHT - 15) || scale >= 6) {
+			for (int i = 0; i < sideLabels.length; i++) {
+				int count = 1;
+				for (int j = sideLabels[i].length - 1; j >= 0; j--) {
+					sideLabels[i][j].setFontScale(scale);
+					if (j == sideLabels[i].length - 1) {
+						if (sideValues[i].get(j) >= 10)
+							sideLabels[i][j].setX(gridBounds.x - squareWidth * 1.25f);
+						else
+							sideLabels[i][j].setX(gridBounds.x - squareWidth);
+					} else {
+						if (sideValues[i].get(j) >= 10)
+							sideLabels[i][j].setX(gridBounds.x - squareWidth * 1.25f * ++count);
+						else
+							sideLabels[i][j].setX(gridBounds.x - (squareWidth) * ++count);
+					}
+				}
+			}
+			return;
+		}
+		scale += 0.1f;
+		for (int i = 0; i < topLabels.length; i++)
+			for (int j = topLabels[i].length - 1; j >= 0; j--) {
+				topLabels[i][j].setFontScale(scale);
+				if (j == topLabels[i].length - 1)
+					topLabels[i][j].setY(gridBounds.height + squareHeight / 2);
+				else
+					topLabels[i][j].setY(topLabels[i][j + 1].getY() + topLabels[i][j + 1].getHeight() * 1.5f * scale);
+			}
+		setupScale();
 	}
-
-	//	private void setupScale() {
-	//		if (topLabels[biggestSpace].getY() + topLabels[biggestSpace].getHeight() * scale + initialFontHeight > imageProvider.getScreenHeight()) {
-	//			for (int i = 0; i < topLabels.length; i++) {
-	//				topLabels[i].setFontScale(scale);
-	//				topLabels[i].setAlignment(Align.bottomLeft);
-	//				int offset = 5;
-	//				if (topNumbers[i].length() >= 3)
-	//					if (!topNumbers[i].substring(topNumbers[i].length() - 3, topNumbers[i].length() - 1).contains("\n"))
-	//						if (Integer.parseInt(topNumbers[i].substring(topNumbers[i].length() - 3, topNumbers[i].length() - 1)) >= 10)
-	//							offset = 2;
-	//				topLabels[i].setPosition(gridBounds.x + squareWidth * i + offset * scale + squareWidth / 2 - topLabels[i].getWidth() / 2, gridBounds.height - 20 * topLabels[i].getFontScaleY());
-	//			}
-	//			for (int i = 0; i < sideLabels.length; i++) {
-	//				sideLabels[i].setFontScale(scale);
-	//				sideLabels[i].setPosition(gridBounds.x - (sideLabels[i].getWidth()), gridBounds.height - squareHeight * (i + 1) + squareHeight / 2 - sideLabels[i].getHeight() / 2);
-	//			}
-	//		} else {
-	//			scale += 0.1f;
-	//			setupScale();
-	//		}
-	//	}
 
 	@Override
 	public void show() {
@@ -338,7 +332,7 @@ public class GameScreen implements Screen {
 		shapeRenderer.setProjectionMatrix(camera.combined);
 		shapeRenderer.begin(ShapeType.Filled);
 		shapeRenderer.setColor(Color.WHITE);
-		shapeRenderer.rect(0, 0, imageProvider.getScreenWidth(), imageProvider.getScreenHeight());
+		shapeRenderer.rect(0, 0, ImageProvider.SCREEN_WIDTH, ImageProvider.SCREEN_HEIGHT);
 		shapeRenderer.end();
 	}
 
@@ -571,6 +565,16 @@ public class GameScreen implements Screen {
 			batch.setColor(colour.r, colour.g, colour.b, alpha);
 			batch.draw(finalImageColoured, gridBounds.x, gridBounds.y, squaresOnWidth * squareWidth, squaresOnHeight * squareHeight);
 		}
+		batch.end();
+		if (stage3Finished) {
+			if (!animationStarted) {
+				pixelsToDraw = 0;
+				animationStarted = true;
+			}
+			animateCharacter();
+		}
+		
+		batch.begin();
 		if (stage1Finished && !stage2Finished) {
 			batch.draw(assetManager.get("Glint.png", Texture.class), glintX += 20f, glintY, assetManager.get("Glint.png", Texture.class).getWidth() / 2, assetManager.get("Glint.png", Texture.class).getHeight() / 2, assetManager.get("Glint.png", Texture.class).getWidth(), gridBounds.height * 1.5f, 1, 1, 315, 0, 0, assetManager.get("Glint.png", Texture.class).getWidth(),
 					assetManager.get("Glint.png", Texture.class).getWidth() / 2, false, false);
@@ -579,6 +583,50 @@ public class GameScreen implements Screen {
 		if (shouldPopScissors)
 			ScissorStack.popScissors();
 
+	}
+
+	private void animateCharacter() {
+		if (characterName == "Serpa") {
+			if ((pixelsToDraw >= 5 + 5 - 2)) {
+				alpha = 0;
+				serpaRowFinished = true;
+				backColor = newColor;
+				if (newColor.equals(color1))
+					newColor = color2;
+				else if (newColor.equals(color2))
+					newColor = color3;
+				else
+					newColor = color1;
+				pixelsToDraw = 0;
+				serpaRowFinished = false;
+			}
+			shapeRenderer.begin(ShapeType.Filled);
+			shapeRenderer.setColor(backColor);
+			shapeRenderer.rect(gridBounds.x, gridBounds.y, squaresOnWidth * squareWidth, squaresOnHeight * squareHeight);
+			shapeRenderer.end();
+			if (!serpaRowFinished) {
+				if (!(pixelsToDraw >= 5 + 5 - 2)) {
+					for (int y = 0; y < 5; y++) {
+						for (int x = y; x < 5 + y; x++) {
+							if (System.currentTimeMillis() - startTime >= serpaDestTime) {
+								startTime = System.currentTimeMillis();
+								pixelsToDraw++;
+							}
+							if (x <= pixelsToDraw)
+								drawPixel(x - y, y, newColor);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	private void drawPixel(int x, int y, Color colour) {
+		shapeRenderer.begin(ShapeType.Filled);
+		shapeRenderer.setColor(colour.r, colour.g, colour.b, colour.a);
+		if (colour.a > 0)
+			shapeRenderer.rect(gridBounds.x + x * squareWidth, gridBounds.height - squareHeight - (y * squareHeight), squareWidth, squareHeight);
+		shapeRenderer.end();
 	}
 
 	private void drawPixel(int x, int y) {

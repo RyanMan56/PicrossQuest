@@ -7,13 +7,15 @@ import com.chronojam.picrossquest.PicrossQuest;
 public class MainMenuScreen implements Screen {
 	private PicrossQuest game;
 	private AssetManager assetManager;
+	private PicrossScreen picrossScreen;
 	private GameScreen gameScreen;
 	private boolean changedScreen = false;
 
 	public MainMenuScreen(PicrossQuest game, AssetManager assetManager) {
 		this.game = game;
 		this.assetManager = assetManager;
-		gameScreen = new GameScreen(game, assetManager, this);
+		picrossScreen = new PicrossScreen(game, assetManager, this, "Main");
+		gameScreen = new GameScreen(game, assetManager);
 	}
 
 	@Override

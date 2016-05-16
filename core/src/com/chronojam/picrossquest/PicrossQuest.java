@@ -3,12 +3,12 @@ package com.chronojam.picrossquest;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Texture;
-import com.chronojam.picrossquest.screens.GameScreen;
+import com.chronojam.picrossquest.screens.PicrossScreen;
 import com.chronojam.picrossquest.screens.MainMenuScreen;
 
 public class PicrossQuest extends Game {
 	private MainMenuScreen mainMenuScreen;
-	private GameScreen gameScreen;
+	private PicrossScreen gameScreen;
 	private AssetManager assetManager;
 	private boolean loaded = false;
 	
@@ -34,6 +34,13 @@ public class PicrossQuest extends Game {
 		assetManager.load("CrossButtonSelected.png", Texture.class);
 		assetManager.load("Ryan.png", Texture.class);
 		assetManager.load("RyanTemplate.png", Texture.class);
+		assetManager.load("Main.png", Texture.class);
+		assetManager.load("MainTemplate.png", Texture.class);
+		assetManager.load("Serpa.png", Texture.class);
+		assetManager.load("SerpaTemplate.png", Texture.class);
+		assetManager.load("MainWalkAnim.png", Texture.class);
+		assetManager.load("Floor.png", Texture.class);
+		assetManager.load("FloorAesthetic.png", Texture.class);
 	}
 
 	@Override

@@ -1,4 +1,4 @@
-package com.subzero.picrossquest.android;
+package com.chronojam.picrossquest.android;
 
 import android.os.Bundle;
 
