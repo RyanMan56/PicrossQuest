@@ -69,7 +69,7 @@ public class PicrossScreen implements Screen {
 	private boolean checkTopNumbers, checkSideNumbers;
 	private boolean[][] greyedNumbersTop, greyedNumbersSide;
 	private String characterName;// = "Main";
-	private boolean debugMode = true;
+	private boolean debugMode = false;
 	private int fontSize = 8;
 	private boolean serpaRowFinished = false;
 	private boolean animationStarted = false;

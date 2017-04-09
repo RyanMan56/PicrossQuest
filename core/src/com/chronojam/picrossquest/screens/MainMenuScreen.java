@@ -15,7 +15,7 @@ public class MainMenuScreen implements Screen {
 		this.game = game;
 		this.assetManager = assetManager;
 		picrossScreen = new PicrossScreen(game, assetManager, this, "Main");
-		gameScreen = new GameScreen(game, assetManager);
+		gameScreen = new Village(game, assetManager, "Test.tmx");
 	}
 
 	@Override

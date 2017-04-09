@@ -2,7 +2,10 @@ package com.chronojam.picrossquest;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.chronojam.picrossquest.screens.PicrossScreen;
 import com.chronojam.picrossquest.screens.MainMenuScreen;
 
@@ -39,8 +42,13 @@ public class PicrossQuest extends Game {
 		assetManager.load("Serpa.png", Texture.class);
 		assetManager.load("SerpaTemplate.png", Texture.class);
 		assetManager.load("MainWalkAnim.png", Texture.class);
-		assetManager.load("Floor.png", Texture.class);
-		assetManager.load("FloorAesthetic.png", Texture.class);
+//		assetManager.load("Floor.png", Texture.class);
+//		assetManager.load("FloorAesthetic.png", Texture.class);
+//		assetManager.load("Dirt.png", Texture.class);
+		
+		assetManager.setLoader(TiledMap.class, new TmxMapLoader(new InternalFileHandleResolver()));
+		assetManager.load("Test.tmx", TiledMap.class);
+		assetManager.load("House.tmx", TiledMap.class);
 	}
 
 	@Override

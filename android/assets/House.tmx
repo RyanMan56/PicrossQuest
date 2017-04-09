@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="10" height="8" tilewidth="30" tileheight="30" nextobjectid="15">
+ <tileset firstgid="1" name="Floor" tilewidth="30" tileheight="30" tilecount="15" columns="5">
+  <image source="WoodFloor.png" width="150" height="90"/>
+ </tileset>
+ <layer name="Background" width="10" height="8">
+  <data encoding="csv">
+1,2,2,2,2,2,2,2,2,3,
+6,7,7,7,7,7,7,7,7,8,
+6,7,7,7,7,7,7,7,7,8,
+6,7,7,7,7,7,7,7,7,8,
+6,7,7,7,7,7,7,7,7,8,
+6,7,7,7,7,7,7,7,7,8,
+6,7,7,7,7,7,7,7,7,8,
+11,12,12,12,4,5,12,12,12,13
+</data>
+ </layer>
+ <objectgroup name="Objects">
+  <object id="1" name="Wall1" x="-0.5" y="-31.3333" width="29.5" height="270.833"/>
+  <object id="3" name="Wall2" x="271.25" y="-31.3333" width="29.5" height="271.333"/>
+  <object id="6" name="Wall4" x="29.0909" y="226.75" width="96.6591" height="13.25"/>
+  <object id="8" name="Wall5" x="173.875" y="227.375" width="97.3977" height="13.25"/>
+  <object id="13" name="Wall3" x="29" y="-29.5" width="242" height="29.4091"/>
+  <object id="14" name="Door" x="125.333" y="236.667" width="48.6667" height="33.3333"/>
+ </objectgroup>
+</map>

@@ -17,7 +17,8 @@ public class Entity {
 	protected Animation animation;
 	protected Sprite sprite;
 	protected float health = 100;
-	protected float x, y;
+	protected float x, y, oldX, oldY;
+	protected float speed = 2;
 	protected float dx, dy;
 	protected Rectangle bounds;
 	protected TextureRegion region;
@@ -25,8 +26,12 @@ public class Entity {
 	protected boolean walking = false;
 	protected final int LEFT = -1, RIGHT = 1;
 	protected int lastDirection = RIGHT;
+	protected boolean canMoveRight = true, canMoveLeft = true, canMoveUp = true, canMoveDown = true;
 
 	public void render(SpriteBatch batch) {
+		oldX = x;
+		oldY = y;
+		
 		x += dx;
 		y += dy;
 		bounds.x = x;
@@ -50,6 +55,59 @@ public class Entity {
 		}
 		sprite.setPosition(x, y);
 		sprite.draw(batch);
+	}
+	
+	public float getX(){
+		return x;
+	}
+	public float getY(){
+		return y;
+	}
+	
+	public float getOldX(){
+		return oldX;
+	}
+	public float getOldY(){
+		return oldY;
+	}
+	
+	public float getWidth(){
+		return bounds.width;
+	}
+	public float getHeight(){
+		return bounds.height;
+	}
+	
+	public Rectangle getBounds(){
+		return bounds;
+	}
+	
+	public float getSpeed(){
+		return speed;
+	}
+	
+	public void setPos(float x, float y){
+		this.x = x;
+		this.y = y;
+	}
+	public void setX(float x){
+		this.x = x;
+	}
+	public void setY(float y){
+		this.y = y;
+	}
+	
+	public void setCanMoveRight(boolean canMoveRight){
+		this.canMoveRight = canMoveRight;
+	}
+	public void setCanMoveLeft(boolean canMoveLeft){
+		this.canMoveLeft = canMoveLeft;
+	}
+	public void setCanMoveUp(boolean canMoveUp){
+		this.canMoveUp = canMoveUp;
+	}
+	public void setCanMoveDown(boolean canMoveDown){
+		this.canMoveDown = canMoveDown;
 	}
 
 }
