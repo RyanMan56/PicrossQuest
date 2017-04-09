@@ -14,7 +14,7 @@ public class Entity {
 	protected TextureRegion[] animatedTextures;
 	protected float period = 1 / 10f;
 	protected float elapsedTime = 0;
-	protected Animation animation;
+	protected Animation<TextureRegion> animation;
 	protected Sprite sprite;
 	protected float health = 100;
 	protected float x, y, oldX, oldY;
