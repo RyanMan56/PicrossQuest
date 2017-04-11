@@ -114,17 +114,29 @@ public class GameScreen implements Screen {
 		camera.update();
 	}
 
-	protected boolean checkCollisions(Entity e, Rectangle[] r) {
-		for (int i = 0; i < r.length; i++) {
-			if (r[i].overlaps(e.getBounds())) {
-				if((new Rectangle(e.getX()+e.getWidth()-e.getSpeed(), e.getY()+e.getSpeed(), e.getSpeed(), e.getHeight()-e.getSpeed()*2).overlaps(r[i])) || (new Rectangle(e.getX(), e.getY()+e.getSpeed(), e.getSpeed(), e.getHeight()-e.getSpeed()*2).overlaps(r[i])))
-					e.setX(e.getOldX());
-				if((new Rectangle(e.getX()+e.getSpeed(), e.getY()+e.getHeight()-e.getSpeed(), e.getWidth()-e.getSpeed()*2, e.getSpeed()).overlaps(r[i])) || (new Rectangle(e.getX()+e.getSpeed(), e.getY(), e.getWidth()-e.getSpeed()*2, e.getSpeed()).overlaps(r[i])))
-					e.setY(e.getOldY());
-//				return true;
+	protected void checkCollisions(Entity e, Rectangle[] rects) {
+		Rectangle eBounds = e.getBounds();
+		float eX = e.getX();
+		float eY = e.getY();
+		float eOldX = e.getOldX();
+		float eOldY = e.getOldY();
+		float eW = e.getWidth();
+		float eH = e.getHeight();
+		float eS = e.getSpeed();
+		
+		Rectangle rightBound = new Rectangle(eX + eW - eS, eY + eS, eS, eH - eS * 2);
+		Rectangle leftBound = new Rectangle(eX, eY + eS, eS, eH - eS * 2);
+		Rectangle topBound = new Rectangle(eX + eS, eY + eH - eS, eW - eS * 2, eS); // top assuming that (0, 0) is bottom left
+		Rectangle bottomBound = new Rectangle(eX + eS, eY, eW - eS * 2, eS);
+		
+		for (Rectangle rect : rects) {
+			if (rect.overlaps(eBounds)) {
+				if(rightBound.overlaps(rect) || leftBound.overlaps(rect))
+					e.setX(eOldX);
+				if(topBound.overlaps(rect) || bottomBound.overlaps(rect))
+					e.setY(eOldY);
 			}
 		}
-		return false;
 	}
 
 	@Override

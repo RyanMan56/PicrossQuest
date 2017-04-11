@@ -24,10 +24,12 @@ public class Village extends GameScreen {
 		houseBounds = new Rectangle[3];
 		for (int i = 0; i < 3; i++) {
 			houseObject = (RectangleMapObject) objectLayer.getObjects().get("House" + (i + 1));
-			houseBounds[i] = new Rectangle(houseObject.getRectangle().x * 2, houseObject.getRectangle().y * 2, houseObject.getRectangle().width * 2, houseObject.getRectangle().height * 2);
+			houseBounds[i] = new Rectangle(houseObject.getRectangle().x * 2, houseObject.getRectangle().y * 2,
+					houseObject.getRectangle().width * 2, houseObject.getRectangle().height * 2);
 		}
 		houseObject = (RectangleMapObject) objectLayer.getObjects().get("Door");
-		doorBounds = new Rectangle(houseObject.getRectangle().x * 2, houseObject.getRectangle().y * 2, houseObject.getRectangle().width * 2, houseObject.getRectangle().height * 2);
+		doorBounds = new Rectangle(houseObject.getRectangle().x * 2, houseObject.getRectangle().y * 2,
+				houseObject.getRectangle().width * 2, houseObject.getRectangle().height * 2);
 
 		house = new House(game, assetManager, "House.tmx");
 	}
@@ -37,7 +39,7 @@ public class Village extends GameScreen {
 		super.render(delta);
 
 		checkCollisions(player, houseBounds);
-		if(player.getBounds().overlaps(doorBounds))
+		if (player.getBounds().overlaps(doorBounds))
 			game.setScreen(house);
 	}
 
